@@ -103,7 +103,7 @@ ARTICLE_LIST_PARAMS = {
             "5ebe1b516c92855b3c810e20"
         ]
     },
-    "query": 'query getInitiativeList($archived: InitiativeListArchivedOptions, $start: ID, $limit: Int = 50, $sortBy: InitiativeListSortOptions, $typeIds: [ID!]) {initiativeList(archived: $archived, start: $start, limit: $limit, sortBy: $sortBy, typeIds: $typeIds) {items {...InitiativeListItemFragment __typename} __typename}}\nfragment InitiativeListItemFragment on Initiative {id addedBy {id fullName __typename} archived body {summary __typename} class dateTimeAdded: dateAdded(format: "YYYY-MM-DDTHH:mm:ss.sssZ") dateTimeLastUpdated: dateLastUpdated(format: "YYYY-MM-DDTHH:mm:ss.sssZ") discussionFormat discussionStatus {closed __typename} labels {id color name __typename} name numNotes numViews pinned privacy slug thread {id lastEntryDateTime: lastEntryDate(format: "YYYY-MM-DDTHH:mm:ss.sssZ") numEntries __typename} type {id slug __typename} __typename}'
+    "query": 'query getInitiativeList($archived: InitiativeListArchivedOptions, $start: ID, $limit: Int = 50, $sortBy: InitiativeListSortOptions, $typeIds: [ID!]) {initiativeList(archived: $archived, start: $start, limit: $limit, sortBy: $sortBy, typeIds: $typeIds) {items {...InitiativeListItemFragment __typename} __typename}}\nfragment InitiativeListItemFragment on Initiative {id addedBy {id fullName __typename} archived body {summary __typename} class dateTimeAdded: dateAdded(format: "YYYY-MM-DDTHH:mm:ssZ") dateTimeLastUpdated: dateLastUpdated(format: "YYYY-MM-DDTHH:mm:ssZ") discussionFormat discussionStatus {closed __typename} labels {id color name __typename} name numNotes numViews pinned privacy slug thread {id lastEntryDateTime: lastEntryDate(format: "YYYY-MM-DDTHH:mm:ssZ") numEntries __typename} type {id slug __typename} __typename}'
 }
 
 def add_articles(feed, session):
@@ -125,6 +125,7 @@ def add_articles(feed, session):
         title = article['name']
         if article.get('discussionStatus') and \
            article['discussionStatus'].get('closed'):
+            article['_last_modified'] += datetime.timedelta(seconds=1)
             title = "[Solved] " + title
         if article.get('thread') and \
            article['thread']['numEntries'] > 0:
