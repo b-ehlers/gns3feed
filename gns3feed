@@ -16,6 +16,7 @@ import os
 import sys
 import argparse
 import hashlib
+import json
 import re
 import datetime
 import dateutil.parser
@@ -43,6 +44,7 @@ def get_data(session, url, data):
                'Content-Type': 'application/json',
                'Referer': HOST+"/"}
 
+    resp = None
     try:
         resp = session.post(HOST + url, headers=headers, timeout=30,
                             json=data)
@@ -56,6 +58,12 @@ def get_data(session, url, data):
         match = re.search(r"\(Caused by ([a-zA-Z0-9_]+)\('[^:]*: (.*)'\)", msg)
         if match:
             msg = "{}: {} for host: {}".format(*match.groups(), HOST)
+        try:
+            if resp is not None:
+                data = json.loads(resp.content)
+                msg += ": {}".format(data['errors'][0]['message'])
+        except (json.JSONDecodeError, KeyError, IndexError):
+            pass
         sys.exit("{} - {}".format(url, msg))
 
     return data
@@ -103,7 +111,7 @@ ARTICLE_LIST_PARAMS = {
             "5ebe1b516c92855b3c810e20"
         ]
     },
-    "query": 'query getInitiativeList($archived: InitiativeListArchivedOptions, $start: ID, $limit: Int = 50, $sortBy: InitiativeListSortOptions, $typeIds: [ID!]) {initiativeList(archived: $archived, start: $start, limit: $limit, sortBy: $sortBy, typeIds: $typeIds) {items {...InitiativeListItemFragment __typename} __typename}}\nfragment InitiativeListItemFragment on Initiative {id addedBy {id fullName __typename} archived body {summary __typename} class dateTimeAdded: dateAdded(format: "YYYY-MM-DDTHH:mm:ssZ") dateTimeLastUpdated: dateLastUpdated(format: "YYYY-MM-DDTHH:mm:ssZ") discussionFormat discussionStatus {closed __typename} labels {id color name __typename} name numNotes numViews pinned privacy slug thread {id lastEntryDateTime: lastEntryDate(format: "YYYY-MM-DDTHH:mm:ssZ") numEntries __typename} type {id slug __typename} __typename}'
+    "query": 'query getInitiativeList($archived: InitiativeListArchivedOptions, $start: ID, $limit: Int = 50, $sortBy: InitiativeListSortOptions, $typeIds: [ID!]) {initiativeList(archived: $archived, start: $start, limit: $limit, sortBy: $sortBy, typeIds: $typeIds) {items {...InitiativeListItemFragment __typename} __typename}}\nfragment InitiativeListItemFragment on Initiative {id addedBy {id fullName __typename} archived body {summary __typename} class dateTimeAdded: dateAdded(format: "YYYY-MM-DDTHH:mm:ssZ") dateTimeLastUpdated: dateLastUpdated(format: "YYYY-MM-DDTHH:mm:ssZ") discussionFormat discussionStatus {closed __typename} labels {id color name __typename} name numViews pinned privacy slug thread {id lastEntryDateTime: lastEntryDate(format: "YYYY-MM-DDTHH:mm:ssZ") numEntries __typename} type {id slug __typename} __typename}'
 }
 
 def add_articles(feed, session):
